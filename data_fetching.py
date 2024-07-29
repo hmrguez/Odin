@@ -49,24 +49,24 @@ orders_schema = [
 
 # Fetch data
 num_records = 60
-# customers_data = fetch_mockaroo_data(customers_schema, num_records)
+customers_data = fetch_mockaroo_data(customers_schema, num_records)
 products_data = fetch_mockaroo_data(products_schema, num_records)
-# orders_data = fetch_mockaroo_data(orders_schema, num_records)
-#
+orders_data = fetch_mockaroo_data(orders_schema, num_records)
+
 # Introduce corruption in the data
 corruption_rate = 0.1
-# customers_data = corrupt_data(customers_data, corruption_rate)
+customers_data = corrupt_data(customers_data, corruption_rate)
 products_data = corrupt_data(products_data, corruption_rate)
-# orders_data = corrupt_data(orders_data, corruption_rate)
+orders_data = corrupt_data(orders_data, corruption_rate)
 
 # Save data to JSON files
-# with open('customers.json', 'w') as f:
-#     json.dump(customers_data, f, indent=4)
+with open('customers.json', 'w') as f:
+    json.dump(customers_data, f, indent=4)
 
 with open('products.json', 'w') as f:
     json.dump(products_data, f, indent=4)
 
-# with open('orders.json', 'w') as f:
-#     json.dump(orders_data, f, indent=4)
+with open('orders.json', 'w') as f:
+    json.dump(orders_data, f, indent=4)
 
 print("Data generated and saved to JSON files.")
