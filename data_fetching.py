@@ -3,7 +3,7 @@ import random
 import json
 
 # Replace 'your_api_key' with your actual Mockaroo API key
-MOCKAROO_API_KEY = '11111111111111111'
+MOCKAROO_API_KEY = '11111111111111'
 MOCKAROO_URL = 'https://api.mockaroo.com/api/generate.json'
 
 
@@ -38,10 +38,24 @@ products_schema = [
     {"name": "price", "type": "Number", "min": 1, "max": 1000}
 ]
 
+
+def read_ids_from_json(file_path, id_key):
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+        ids = [item[id_key] for item in data if id_key in item and item[id_key] is not None]
+    return ids
+
+
+# Read customer_ids from customers.json
+customer_ids = read_ids_from_json('customers.json', 'customer_id')
+
+# Read product_ids from products.json
+product_ids = read_ids_from_json('products.json', 'product_id')
+
 orders_schema = [
     {"name": "order_id", "type": "Number"},
-    {"name": "customer_id", "type": "Number"},
-    {"name": "product_id", "type": "Number"},
+    {"name": "customer_id", "type": "Custom List", "values": [str(id) for id in customer_ids]},
+    {"name": "product_id", "type": "Custom List", "values": [str(id) for id in product_ids]},
     {"name": "quantity", "type": "Number", "min": 1, "max": 10},
     {"name": "order_date", "type": "Datetime"},
     {"name": "total_amount", "type": "Formula", "value": "price * quantity"}
@@ -49,22 +63,22 @@ orders_schema = [
 
 # Fetch data
 num_records = 60
-customers_data = fetch_mockaroo_data(customers_schema, num_records)
-products_data = fetch_mockaroo_data(products_schema, num_records)
+# customers_data = fetch_mockaroo_data(customers_schema, num_records)
+# products_data = fetch_mockaroo_data(products_schema, num_records)
 orders_data = fetch_mockaroo_data(orders_schema, num_records)
 
 # Introduce corruption in the data
 corruption_rate = 0.1
-customers_data = corrupt_data(customers_data, corruption_rate)
-products_data = corrupt_data(products_data, corruption_rate)
+# customers_data = corrupt_data(customers_data, corruption_rate)
+# products_data = corrupt_data(products_data, corruption_rate)
 orders_data = corrupt_data(orders_data, corruption_rate)
 
 # Save data to JSON files
-with open('customers.json', 'w') as f:
-    json.dump(customers_data, f, indent=4)
-
-with open('products.json', 'w') as f:
-    json.dump(products_data, f, indent=4)
+# with open('customers.json', 'w') as f:
+#     json.dump(customers_data, f, indent=4)
+#
+# with open('products.json', 'w') as f:
+#     json.dump(products_data, f, indent=4)
 
 with open('orders.json', 'w') as f:
     json.dump(orders_data, f, indent=4)
