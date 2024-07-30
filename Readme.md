@@ -1,6 +1,4 @@
-Here's a structured README template for your project:
-
-# Data Engineering Project: Azure SQL to Snowflake ETL Pipeline
+# Data Engineering Project: Azure SQL to Snowflake ETL Pipeline - ODIN
 
 ## Table of Contents
 
