@@ -105,6 +105,9 @@
           "type": "linkedservices",
           "apiVersion": "2018-06-01",
           "name": "AzureSqlDatabaseLinkedService",
+          "dependsOn": [
+            "[resourceId('Microsoft.DataFactory/factories', parameters('dataFactoryName'))]"
+          ],
           "properties": {
             "type": "AzureSqlDatabase",
             "typeProperties": {
@@ -116,6 +119,9 @@
           "type": "linkedservices",
           "apiVersion": "2018-06-01",
           "name": "SnowflakeLinkedService",
+          "dependsOn": [
+            "[resourceId('Microsoft.DataFactory/factories', parameters('dataFactoryName'))]"
+          ],
           "properties": {
             "type": "Snowflake",
             "typeProperties": {
