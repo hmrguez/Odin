@@ -1,0 +1,143 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sqlServerName": {
+      "type": "string",
+      "defaultValue": "odin-sql-server",
+      "metadata": {
+        "description": "The name of the SQL Server."
+      }
+    },
+    "sqlServerAdminLogin": {
+      "type": "string",
+      "defaultValue": "hmrguez",
+      "metadata": {
+        "description": "The admin username for the SQL Server."
+      }
+    },
+    "sqlServerAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The admin password for the SQL Server."
+      }
+    },
+    "sqlDatabaseName": {
+      "type": "string",
+      "defaultValue": "odin-ecommerce",
+      "metadata": {
+        "description": "The name of the SQL Database."
+      }
+    },
+    "dataFactoryName": {
+      "type": "string",
+      "defaultValue": "odin-data-factory",
+      "metadata": {
+        "description": "The name of the Data Factory."
+      }
+    },
+    "snowflakeAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The Snowflake account name."
+      }
+    },
+    "snowflakeUser": {
+      "type": "string",
+      "metadata": {
+        "description": "The Snowflake username."
+      }
+    },
+    "snowflakePassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The Snowflake password."
+      }
+    },
+    "snowflakeDatabase": {
+      "type": "string",
+      "metadata": {
+        "description": "The Snowflake database name."
+      }
+    },
+    "snowflakeWarehouse": {
+      "type": "string",
+      "metadata": {
+        "description": "The Snowflake warehouse name."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2021-02-01-preview",
+      "name": "[parameters('sqlServerName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "administratorLogin": "[parameters('sqlServerAdminLogin')]",
+        "administratorLoginPassword": "[parameters('sqlServerAdminPassword')]"
+      },
+      "resources": [
+        {
+          "type": "databases",
+          "apiVersion": "2021-02-01-preview",
+          "name": "[parameters('sqlDatabaseName')]",
+          "location": "[resourceGroup().location]",
+          "properties": {
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "maxSizeBytes": "1073741824",
+            "sampleName": "AdventureWorksLT"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.DataFactory/factories",
+      "apiVersion": "2018-06-01",
+      "name": "[parameters('dataFactoryName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {},
+      "resources": [
+        {
+          "type": "linkedservices",
+          "apiVersion": "2018-06-01",
+          "name": "AzureSqlDatabaseLinkedService",
+          "properties": {
+            "type": "AzureSqlDatabase",
+            "typeProperties": {
+              "connectionString": "[concat('Server=tcp:', parameters('sqlServerName'), '.database.windows.net,1433;Initial Catalog=', parameters('sqlDatabaseName'), ';Persist Security Info=False;User ID=', parameters('sqlServerAdminLogin'), ';Password=', parameters('sqlServerAdminPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+            }
+          }
+        },
+        {
+          "type": "linkedservices",
+          "apiVersion": "2018-06-01",
+          "name": "SnowflakeLinkedService",
+          "properties": {
+            "type": "Snowflake",
+            "typeProperties": {
+              "connectionString": "[concat('jdbc:snowflake://', parameters('snowflakeAccount'), '.snowflakecomputing.com/?user=', parameters('snowflakeUser'), '&password=', parameters('snowflakePassword'), '&db=', parameters('snowflakeDatabase'), '&warehouse=', parameters('snowflakeWarehouse'), '&role=')]"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "sqlServerName": {
+      "type": "string",
+      "value": "[parameters('sqlServerName')]"
+    },
+    "sqlDatabaseName": {
+      "type": "string",
+      "value": "[parameters('sqlDatabaseName')]"
+    },
+    "dataFactoryName": {
+      "type": "string",
+      "value": "[parameters('dataFactoryName')]"
+    }
+  }
+}

@@ -1,2 +1,4 @@
-*.json
+products.json
+orders.json
+customers.json
 .env
