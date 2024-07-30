@@ -12,8 +12,7 @@ Here's a structured README template for your project:
    - [Step 2: Deploy ARM Template](#step-2-deploy-arm-template)
    - [Step 3: Configure Azure Data Factory](#step-3-configure-azure-data-factory)
 5. [Creating Data Factory Pipelines](#creating-data-factory-pipelines)
-6. [Guidelines for Data Modeling and Transformation](#guidelines-for-data-modeling-and-transformation)
-7. [Conclusion](#conclusion)
+6. [Data Modeling](#data-modeling)
 
 ## Project Overview
 
@@ -43,6 +42,8 @@ Before you begin, ensure you have the following:
 
 ### Step 1: Set Up Azure Resources
 
+> I can't use my own credentials or names here obviously
+
 1. **Create an Azure Resource Group**
    ```bash
    az group create --name yourResourceGroup --location yourLocation
@@ -54,8 +55,9 @@ Before you begin, ensure you have the following:
 
 ### Step 2: Deploy ARM Template
 
+
 1. **Save the ARM Template**
-   - Save the ARM template provided above as `azure-deploy.json`.
+   - Save the ARM template provided above as `deployment.json`.
 
 2. **Deploy the ARM Template**
    ```bash
@@ -96,7 +98,7 @@ Before you begin, ensure you have the following:
    - Configure the sink to be your Snowflake dataset.
 
 2. **Add Data Flow Activities**
-   - Use data flow activities to perform necessary transformations and filtering.
+   - Use data flow activities to perform the necessary transformations and filtering (which I described [below](#data-modeling)).
    - Configure the transformations as per your data modeling requirements.
 
 ### Step 3: Schedule and Monitor the Pipeline
@@ -107,16 +109,46 @@ Before you begin, ensure you have the following:
 2. **Monitor the Pipeline**
    - Use the monitoring tools in Azure Data Factory to track pipeline execution and debug any issues.
 
-## Guidelines for Data Modeling and Transformation
+## Data Modeling
 
-- **Data Modeling**: Define the schema and structure of your data in Azure SQL Database and Snowflake.
-- **Data Transformation**: Implement necessary transformations using data flow activities in Azure Data Factory.
-  - Examples include filtering rows, adding computed columns, joining tables, etc.
+Here we are solving a common problem of data in an ecommerce website. The data 3-fold: products, customers and orders. Data is gathered from the Mockoroo API. Data has a fixed schema which means that it can be stored and uploaded to any SQL database, where I chose an Azure SQL Database. The data is then transformed and filtered using Azure Data Factory and exported to a Snowflake database. To create both SQL database (Azure and Snowflake), we use the following `CREATE TABLE` command, specifying its schema:
 
-## Conclusion
+```sql
+-- Create the Customers table
+CREATE TABLE Customers (
+    customer_id FLOAT PRIMARY KEY,
+    customer_name NVARCHAR(255),
+    email NVARCHAR(255) NOT NULL,
+    phone NVARCHAR(50),
+    address NVARCHAR(255)
+);
 
-This README provides a framework to set up a data engineering pipeline using Azure SQL Database, Azure Data Factory, and Snowflake. Follow the steps to recreate the project, and refer to the guidelines for data modeling and transformation to customize the pipeline as per your requirements. For detailed instructions on data modeling and transformation, please refer to the relevant documentation and best practices.
+-- Create the Products table
+CREATE TABLE Products (
+    product_id FLOAT PRIMARY KEY,
+    product_name NVARCHAR(255),
+    category NVARCHAR(255),
+    price FLOAT
+);
 
----
+-- Create the Orders table
+CREATE TABLE Orders (
+    order_id FLOAT PRIMARY KEY,
+    customer_id FLOAT,
+    product_id FLOAT,
+    quantity FLOAT,
+    order_date DATETIMEOFFSET,
+    total_amount NVARCHAR(255),
+    FOREIGN KEY (customer_id) REFERENCES Customers(customer_id),
+    FOREIGN KEY (product_id) REFERENCES Products(product_id)
+);
+```
 
-Feel free to modify this README to fit your specific needs and include any additional details or diagrams that may be helpful for understanding the project.
+Due to this schema, we enforce some quality checks on the data inserted there. Nothing too complicated. Just make sure that any number field is not null and that the FK constraints from the orders are satisfied.
+
+In the Azure Data Factory pipeline, we perform the following transformations:
+1. In Products we filter out any product whose name is null, since there's no evident analysis that could be made from those 
+2. In Customers we don't really need to transform or filter out anything for the time being, a user with no name could still be useful for plotting for example `How many users bought a certain product?`. But we could filter out any user with no email, since that's a required field, luckily the pipeline doesn't need to do it, because it's already enforced by the DB
+3. In Orders we transform the total_amount field. Because of the nature of the data, it may be wrongfully calculated. Its formula is `quantity * price`. For that we perform a join with the Products table to take the price of the product and then calculate it with the quantity of `self`
+
+Generally, data is ready then to be shipped to Snowflake for further analysis, thus ensuring Data Quality for the time being
